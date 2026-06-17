@@ -48,7 +48,7 @@ export default function ThresholdSettingsPage() {
         <div className="panel p-5 max-w-2xl">
           <p className="font-display font-medium text-[14px] text-rail-navy mb-1">Set Route Threshold</p>
           <p className="text-[13px] text-rail-steelLight mb-5">
-            Alerts fire when speed &ge; 80 km/h and a recorded peak exceeds the route's threshold.
+            Alerts fire when speed &ge; 80 km/h and vertical or lateral acceleration exceeds the route threshold.
             Severity scales with how far the reading exceeds the limit (Critical / Warning / Info).
           </p>
 

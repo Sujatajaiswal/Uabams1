@@ -53,7 +53,7 @@ export default function AlertsPage() {
                   <th className="px-4 py-2.5 font-medium">Route</th>
                   <th className="px-4 py-2.5 font-medium">Train</th>
                   <th className="px-4 py-2.5 font-medium">Metric</th>
-                  <th className="px-4 py-2.5 font-medium">Peak (g)</th>
+                  <th className="px-4 py-2.5 font-medium">Value (g)</th>
                   <th className="px-4 py-2.5 font-medium">Threshold (g)</th>
                   <th className="px-4 py-2.5 font-medium">Nearest KM</th>
                   <th className="px-4 py-2.5 font-medium">Severity</th>
@@ -71,7 +71,7 @@ export default function AlertsPage() {
                     <td className="px-4 py-2.5 font-mono text-rail-steel">{a.peak.toFixed(1)}</td>
                     <td className="px-4 py-2.5 font-mono text-rail-steelLight">{a.threshold.toFixed(1)}</td>
                     <td className="px-4 py-2.5 font-mono text-rail-steelLight">
-                      {a.nearestTrackFeatureKm != null ? `Km ${a.nearestTrackFeatureKm.toFixed(0)}` : '—'}
+                      {a.nearestTrackFeatureKm != null ? `Km ${a.nearestTrackFeatureKm.toFixed(0)}` : '-'}
                     </td>
                     <td className="px-4 py-2.5"><SeverityBadge severity={a.severity} /></td>
                   </tr>
