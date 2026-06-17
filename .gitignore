@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.python/
+.venv/
+venv/
+*.db
+_tmp_*
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Env files
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+*.log
