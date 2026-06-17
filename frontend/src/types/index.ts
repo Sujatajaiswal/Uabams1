@@ -117,6 +117,8 @@ export interface AlertRecord {
   peak: number
   threshold: number
   speedKmph: number
+  lat: number | null
+  lon: number | null
   severity: Severity
   message: string
   nearestTrackFeatureKm: number | null

@@ -36,6 +36,8 @@ def list_alerts(
             peak=r.value,
             threshold=r.threshold_value,
             speedKmph=r.speed_kmph,
+            lat=r.session.lat if r.session else None,
+            lon=r.session.lon if r.session else None,
             severity=r.severity,
             message=r.message,
             nearestTrackFeatureKm=r.nearest_track_feature_km,

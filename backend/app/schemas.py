@@ -124,6 +124,8 @@ class AlertOut(BaseModel):
     peak: float
     threshold: float
     speedKmph: float
+    lat: Optional[float] = None
+    lon: Optional[float] = None
     severity: str
     message: str
     nearestTrackFeatureKm: Optional[float] = None
