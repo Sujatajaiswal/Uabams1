@@ -26,6 +26,7 @@ from app.services.gateway_archive import (
     ingest_gateway_zip,
     looks_like_gateway_zip,
 )
+from app.services.notifications import queue_or_send_alert_notifications
 
 router = APIRouter(prefix="/api/v1", tags=["archive"])
 
@@ -137,6 +138,8 @@ async def _handle_archive(request: Request, db: Session) -> schemas.ArchiveRespo
 
     threshold = get_or_default_threshold(db, route)
     alerts_created = evaluate_alerts(db_session, axle_records, threshold, db)
+    db.flush()
+    queue_or_send_alert_notifications(db, alerts_created, db_session)
 
     db.commit()
 

@@ -38,5 +38,17 @@ class Settings:
     # Module 3 rule: alerts only fire at or above this speed (km/h)
     ALERT_SPEED_GATE_KMPH: float = 80.0
 
+    # Optional production integrations. Without these values, the system
+    # records an auditable outbox/delivery row instead of pretending to send.
+    ALERT_NOTIFICATION_WEBHOOK_URL: str = os.getenv("ALERT_NOTIFICATION_WEBHOOK_URL", "")
+    ALERT_NOTIFICATION_BEARER_TOKEN: str = os.getenv("ALERT_NOTIFICATION_BEARER_TOKEN", "")
+    TMS_DELIVERY_MODE: str = os.getenv("TMS_DELIVERY_MODE", "local").lower()
+    TMS_HTTP_URL: str = os.getenv("TMS_HTTP_URL", "")
+    TMS_HTTP_BEARER_TOKEN: str = os.getenv("TMS_HTTP_BEARER_TOKEN", "")
+    TMS_LOCAL_EXPORT_DIR: str = os.getenv(
+        "TMS_LOCAL_EXPORT_DIR",
+        str(Path(gettempdir()) / "uabams-cloud" / "tms-exports"),
+    )
+
 
 settings = Settings()

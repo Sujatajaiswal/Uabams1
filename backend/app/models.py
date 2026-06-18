@@ -200,6 +200,49 @@ class Alert(Base):
     session = relationship("GatewaySession", back_populates="alerts")
 
 
+class NotificationDelivery(Base):
+    """
+    Auditable SMS/notification outbox for generated alerts.
+
+    In local/demo mode rows remain queued. In production, setting
+    ALERT_NOTIFICATION_WEBHOOK_URL lets the backend POST each alert to an
+    SMS/notification gateway and record success/failure here.
+    """
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (Index("ix_notification_alert", "alert_id"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    alert_id = Column(Integer, ForeignKey("alerts.id"), nullable=False)
+    channel = Column(String(32), nullable=False, default="webhook")
+    recipient = Column(String(255), nullable=True)
+    status = Column(String(32), nullable=False, default="queued")
+    provider_message_id = Column(String(255), nullable=True)
+    request_payload = Column(JSON, nullable=True)
+    response_payload = Column(JSON, nullable=True)
+    error_message = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    sent_at = Column(DateTime, nullable=True)
+
+
+class TmsDelivery(Base):
+    """Audit log for CRIS/TMS export transfer attempts."""
+    __tablename__ = "tms_deliveries"
+    __table_args__ = (Index("ix_tms_delivery_created", "created_at"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    days = Column(Integer, nullable=False)
+    mode = Column(String(32), nullable=False)
+    status = Column(String(32), nullable=False, default="created")
+    target = Column(String(512), nullable=True)
+    file_name = Column(String(255), nullable=False)
+    file_size_bytes = Column(Integer, nullable=False)
+    checksum = Column(String(64), nullable=False)
+    response_payload = Column(JSON, nullable=True)
+    error_message = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    delivered_at = Column(DateTime, nullable=True)
+
+
 class ThresholdSetting(Base):
     """Per-route acceleration thresholds (Module 3)."""
     __tablename__ = "threshold_settings"

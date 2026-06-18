@@ -107,6 +107,8 @@ Checked on 18 June 2026:
 | `rms_records` | 0 | Filled only by real `rms_25cm.bin` uploads |
 | `peak_records` | 0 | Filled only by real `peak_50m.bin` uploads |
 | `fault_records` | 0 | Filled only by real `faults.bin` uploads |
+| `notification_deliveries` | Created on startup | SMS/notification outbox and delivery audit |
+| `tms_deliveries` | Created on startup | CRIS/TMS ZIP transfer audit |
 
 ## 7. Dashboard Pages
 
@@ -138,6 +140,22 @@ The export uses:
 - `rms_records` and `peak_records` when real ICD ZIP data exists.
 - Dashboard summary rows as fallback for demo data.
 
+The backend also has a delivery endpoint:
+
+```text
+POST /api/v1/export/tms/deliver
+```
+
+Default mode writes the ZIP to `TMS_LOCAL_EXPORT_DIR` and records a
+`tms_deliveries` audit row. When CRIS provides an HTTP receiving endpoint,
+set:
+
+```text
+TMS_DELIVERY_MODE=http
+TMS_HTTP_URL=https://<cris-tms-receiver>
+TMS_HTTP_BEARER_TOKEN=<token if required>
+```
+
 ## 9. RDSO/ICD Requirement Mapping
 
 | Requirement | Project Status |
@@ -150,7 +168,8 @@ The export uses:
 | TMS hand-off | Implemented as export ZIP with CSV files and optional MDB |
 | Original ZIP permanent retention | Implemented via archive storage path |
 | Raw binary extracted-file retention | Implemented via `extracted_files` and archive folder |
-| Real-time SMS/notification sending | Not implemented; dashboard/backend alerts only |
+| Real-time SMS/notification sending | Implemented as notification outbox plus optional webhook sender |
+| Direct CRIS/TMS server transfer | Implemented for local hand-off and HTTP push when CRIS URL/token are configured |
 | Hardware/MMD compliance | Not part of cloud software; hardware/vendor responsibility |
 | Encryption/private APN/GSM network | Not implemented in local demo; deployment/network responsibility |
 
@@ -174,6 +193,22 @@ To put it on a real server:
 
 ```text
 https://<backend-service-url>/api/v1/archive
+```
+
+6. Configure alert notification delivery if an SMS/notification provider is
+   available:
+
+```text
+ALERT_NOTIFICATION_WEBHOOK_URL=https://<sms-or-notification-provider>
+ALERT_NOTIFICATION_BEARER_TOKEN=<token if required>
+```
+
+7. Configure TMS delivery when CRIS gives the final receiving API:
+
+```text
+TMS_DELIVERY_MODE=http
+TMS_HTTP_URL=https://<cris-tms-receiver>
+TMS_HTTP_BEARER_TOKEN=<token if required>
 ```
 
 For production, SQLite should be replaced by PostgreSQL using `DATABASE_URL`.

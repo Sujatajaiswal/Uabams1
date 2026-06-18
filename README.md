@@ -77,6 +77,12 @@ Important variables:
 - `CORS_ORIGINS`: defaults to `*`
 - `SEED_ON_STARTUP`: defaults to `true`
 - `VITE_API_BASE_URL`: defaults to `http://localhost:8000`
+- `ALERT_NOTIFICATION_WEBHOOK_URL`: optional SMS/notification gateway endpoint
+- `ALERT_NOTIFICATION_BEARER_TOKEN`: optional bearer token for that endpoint
+- `TMS_DELIVERY_MODE`: `local` by default, or `http` for direct CRIS/TMS API push
+- `TMS_HTTP_URL`: CRIS/TMS receiving endpoint when `TMS_DELIVERY_MODE=http`
+- `TMS_HTTP_BEARER_TOKEN`: optional bearer token for the CRIS/TMS endpoint
+- `TMS_LOCAL_EXPORT_DIR`: local/audit folder for generated TMS ZIP files
 
 ## Deploy To Render
 
@@ -99,6 +105,9 @@ Important variables:
 | `GET` | `/api/v1/alerts` | Alerts |
 | `GET` | `/api/v1/gateways` | Gateway status |
 | `GET` | `/api/v1/export/tms` | TMS export ZIP |
+| `POST` | `/api/v1/export/tms/deliver` | Build and deliver/audit the TMS export |
+| `GET` | `/api/v1/maintenance/notification-deliveries` | SMS/notification outbox audit |
+| `GET` | `/api/v1/maintenance/tms-deliveries` | CRIS/TMS delivery audit |
 
 ## Gateway Simulator
 
@@ -155,3 +164,10 @@ to this implementation as follows:
   and stored in `threshold_settings`.
 - "alerts containing value and GPS location": implemented in `alerts`, derived
   from uploaded session GPS/peak data and shown on the Alerts map.
+- "SMS/notification alerts": implemented as an auditable outbox. Configure
+  `ALERT_NOTIFICATION_WEBHOOK_URL` to push each alert to an SMS/notification
+  provider.
+- "transfer to CRIS server": implemented as a TMS delivery service. Default
+  local mode writes the ZIP to disk for hand-off; configure
+  `TMS_DELIVERY_MODE=http` and `TMS_HTTP_URL` when CRIS provides the receiving
+  endpoint.
