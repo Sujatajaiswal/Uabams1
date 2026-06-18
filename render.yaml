@@ -30,6 +30,8 @@ services:
         value: "2500"
       - key: GATEWAY_OFFLINE_AFTER_SECONDS
         value: "300"
+      - key: PYTHON_VERSION
+        value: "3.12.13"
 
   - type: web
     name: uabams-frontend
