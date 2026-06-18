@@ -77,16 +77,5 @@ export async function uploadArchive(payload: SimulatedUploadPayload): Promise<Ar
  * backend/app/services/tms_export.py for the full rationale.
  */
 export async function downloadTmsExport(days = 30): Promise<void> {
-  const response = await api.get('/api/v1/export/tms', {
-    params: { days },
-    responseType: 'blob',
-  })
-  const url = window.URL.createObjectURL(new Blob([response.data]))
-  const link = document.createElement('a')
-  link.href = url
-  link.setAttribute('download', `uabams_tms_export_${days}d.zip`)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(url)
+  window.location.href = `${BASE_URL}/api/v1/export/tms?days=${days}`
 }
