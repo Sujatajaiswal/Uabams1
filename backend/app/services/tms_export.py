@@ -184,8 +184,8 @@ the CRIS TMS server, preferably in MDB format:
 
   1. spatial_acceleration_export.csv  - dataset (i): geo-tagged
      vertical/lateral acceleration readings per axle, per session.
-  2. processed_peak_export.csv        - dataset (ii): processed peak/RMS
-     data with threshold-exceedance and severity context.
+  2. processed_peak_export.csv        - dataset (ii): processed data
+     having peaks, with threshold-exceedance and severity context.
 
 uabams_tms_target.mdb is a genuine, empty Microsoft Access (Jet 4)
 database container, ready to receive the two tables above.
@@ -215,10 +215,19 @@ installed):
   4. Import processed_peak_export.csv as table "ProcessedPeaks".
   5. Save. The .mdb now contains both RDSO-required datasets.
 
-This two-step hand-off (cloud generates the open, documented CSV per
-clause 2.6; a Windows-side import finalizes the MDB container) is the
-same pattern CRIS's legacy intermediate-server integrations already use
-for CSV-to-Access ingestion today.
+This two-step hand-off (cloud generates the open, documented ASCII/CSV
+datasets per clauses 2.5 and 2.6; a Windows-side import finalizes the
+MDB container when CRIS requires MDB) is the practical route until the
+final CRIS transfer protocol/schema is supplied.
+
+MMD / SOD NOTE
+--------------
+Maximum Moving Dimension (MMD) compliance is not a TMS data file and is
+not exported as CSV. It is a mechanical/hardware installation compliance
+matter: accelerometers, brackets and system hardware must fit within the
+IR Schedule of Dimension envelope. The cloud can retain document/audit
+references if the project requires it, but it cannot prove physical MMD
+clearance from acceleration data alone.
 """
 
 

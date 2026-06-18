@@ -151,15 +151,19 @@ The parsed records are stored in SQLite/PostgreSQL tables:
 The RDSO paragraph covering intermediate-server storage and TMS hand-off maps
 to this implementation as follows:
 
-- "database or ASCII file": SQLite locally and PostgreSQL in cloud, with CSV
-  export files for open documented hand-off.
+- "database or ASCII file": SQLite locally and PostgreSQL in cloud, with open
+  ASCII/CSV export files for the two required hand-off datasets.
 - "spatial acceleration data": parsed from `rms/rms_25cm.bin` into
   `rms_records`, then exported as `spatial_acceleration_export.csv`.
 - "processed data having peaks": parsed from `peak/peak_50m.bin` into
   `peak_records`, then exported as `processed_peak_export.csv`.
 - "preferably MDB": export includes a target MDB container when the runtime can
-  create it; the CSV files remain the authoritative open data files for CRIS/TMS
-  import.
+  create it; the open ASCII/CSV files remain the authoritative populated data
+  on Linux because Access/Jet write support is Windows-only.
+- "MMD envelope": this is not a cloud/TMS data file and not a CSV export. It is
+  a hardware/mechanical mounting compliance requirement against the IR Schedule
+  of Dimension. Store drawings/sign-off as project evidence if required, but
+  the cloud cannot prove physical MMD clearance from acceleration data.
 - "route-wise limits editable by purchaser": implemented in Threshold Settings
   and stored in `threshold_settings`.
 - "alerts containing value and GPS location": implemented in `alerts`, derived
