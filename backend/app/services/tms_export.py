@@ -36,13 +36,13 @@ achievable package:
   1. A genuinely valid, empty target .mdb container (so the existing
      Windows/Access-based TMS import tooling at CRIS has the right
      binary shell to import into).
-  2. The two required datasets fully populated as open, documented CSV
-     (explicitly permitted by clause 2.5's first sentence and clause 2.6
-     "All file formats shall be open and documented").
-  3. A ready-to-run Access import script + schema doc so a one-time
-     manual/automated import on the Windows side finishes the MDB
-     population - the same workflow CRIS already uses for legacy
-     CSV-to-Access ingestion today.
+  2. The two required datasets fully populated as open, documented ASCII
+     files using CSV structure (explicitly permitted by clause 2.5's
+     first sentence and clause 2.6 "All file formats shall be open and
+     documented").
+  3. Import guidance so a one-time manual/automated import on the
+     Windows/Access side finishes the MDB population when CRIS requires
+     the MDB container.
 
 This is documented in README.md under "TMS / MDB export".
 """
@@ -180,7 +180,8 @@ MDB_README = """UABAMS -> CRIS TMS Export Package
 
 This package implements clause 2.5 of RDSO Technical Specification
 TM/IM/434 (UABAMS), which requires two data files to be transferred to
-the CRIS TMS server, preferably in MDB format:
+the CRIS TMS server. The preferred final container is MDB (Microsoft
+Access database), not MMD:
 
   1. spatial_acceleration_export.csv  - dataset (i): geo-tagged
      vertical/lateral acceleration readings per axle, per session.
@@ -219,6 +220,11 @@ This two-step hand-off (cloud generates the open, documented ASCII/CSV
 datasets per clauses 2.5 and 2.6; a Windows-side import finalizes the
 MDB container when CRIS requires MDB) is the practical route until the
 final CRIS transfer protocol/schema is supplied.
+
+TERMINOLOGY NOTE: MDB vs MMD
+----------------------------
+MDB is the preferred TMS data-file/container format mentioned in clause
+2.5. MMD is completely different: it means Maximum Moving Dimension.
 
 MMD / SOD NOTE
 --------------

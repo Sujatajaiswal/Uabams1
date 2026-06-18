@@ -162,12 +162,12 @@ export default function CloudDataPage() {
     downloadText('uabams-cloud-data-snapshot.json', JSON.stringify(payload, null, 2), 'application/json')
   }
 
-  function downloadAllCsv() {
+  function downloadAllAsciiSnapshot() {
     const blocks = sections.map((section) => {
       const rows = rowsFromData(section.data)
       return [`# ${section.label}`, `# ${API_BASE}${section.path}`, toCsv(rows)].join('\n')
     })
-    downloadText('uabams-cloud-data-snapshot.csv', blocks.join('\n\n'), 'text/csv')
+    downloadText('uabams-cloud-data-ascii-snapshot.csv', blocks.join('\n\n'), 'text/csv')
   }
 
   async function handleTmsExport() {
@@ -234,12 +234,12 @@ export default function CloudDataPage() {
               Download JSON
             </button>
             <button
-              onClick={downloadAllCsv}
+              onClick={downloadAllAsciiSnapshot}
               disabled={loading || sections.length === 0}
               className="inline-flex items-center gap-2 rounded-md bg-rail-navy px-3 py-2 text-[12.5px] font-medium text-white hover:bg-rail-navyLight disabled:opacity-60"
             >
               <Table2 size={14} />
-              Download CSV
+              ASCII Snapshot
             </button>
             <button
               onClick={handleTmsExport}

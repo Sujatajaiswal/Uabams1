@@ -151,6 +151,11 @@ The parsed records are stored in SQLite/PostgreSQL tables:
 The RDSO paragraph covering intermediate-server storage and TMS hand-off maps
 to this implementation as follows:
 
+Terminology note: **MMD** and **MDB** are different. MMD means Maximum Moving
+Dimension and belongs to physical mounting/clearance. MDB means Microsoft
+Access database file and is the TMS-preferred data container mentioned in the
+specification.
+
 - "database or ASCII file": SQLite locally and PostgreSQL in cloud, with open
   ASCII/CSV export files for the two required hand-off datasets.
 - "spatial acceleration data": parsed from `rms/rms_25cm.bin` into

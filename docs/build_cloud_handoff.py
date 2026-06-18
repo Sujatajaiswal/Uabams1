@@ -12,7 +12,7 @@ from docx.shared import Inches, Pt, RGBColor
 
 
 ROOT = Path(__file__).resolve().parent
-OUT = ROOT / "UABAMS_Cloud_Data_Interface_Handoff.docx"
+OUT = ROOT / "UABAMS_Cloud_Data_Interface_Handoff_v2.docx"
 FLOW = ROOT / "_cloud_data_flow.png"
 
 NAVY = "123A63"
@@ -278,6 +278,7 @@ def build():
         ("Verified on", "18 June 2026"),
     ], [1.75, 4.75], 9)
     add_callout(doc, "Executive position", "The cloud reference flow is operational for PostgreSQL, dashboard APIs, thresholds, alerts, and export generation. Production rollout still requires durable object storage, gateway authentication, a proven real ICD ZIP acceptance test, and final CRIS/SMS connection details.", AMBER)
+    add_callout(doc, "Terminology correction", "MMD and MDB are different. MMD means Maximum Moving Dimension and is a hardware mounting/clearance envelope. MDB means Microsoft Access database file and is the preferred TMS data container mentioned by the specification.", RED)
 
     doc.add_heading("1. Purpose and scope", level=1)
     doc.add_paragraph("This document tells an independent implementation team exactly what the UABAMS cloud receives, how the payload is validated and stored, what the cloud processes, what it sends onward, and how a gateway connects. It separates the frozen gateway ICD from demonstration-only interfaces and from integrations that depend on external railway infrastructure.")
@@ -452,7 +453,7 @@ Content-Type: application/json
         ("Summary", "Create session/axle projection for dashboard", "gateway_sessions, axle_records"),
         ("Alerting", "Apply route threshold when speed >= 80 km/h; attach GPS/KM", "alerts"),
         ("Notification", "Queue or POST alert notification", "notification_deliveries"),
-        ("TMS", "Generate the two required handoff datasets; package as ASCII/CSV and optional MDB", "tms_deliveries"),
+        ("TMS", "Generate the two required handoff datasets; package for MDB-preferred TMS handoff", "tms_deliveries"),
     ], [1.15, 3.55, 1.8], 8.2)
 
     doc.add_heading("8. Cloud storage structure", level=1)
@@ -498,7 +499,7 @@ Content-Type: application/json
         ("Gateway", "Threshold, wear, sampling rate", "GET /api/v1/config JSON over HTTPS", "Cloud endpoint exists; gateway polling not in frozen implementation"),
         ("Officials", "Safety alert with value and GPS", "Webhook JSON to SMS/notification provider", "Outbox works; provider URL/token required"),
         ("Dashboard", "Cards, trends, GPS, alerts", "REST JSON over HTTPS", "Verified HTTP 200"),
-        ("CRIS/TMS", "Spatial acceleration + processed peaks", "ZIP containing open ASCII/CSV datasets and optional MDB; HTTP push or handoff", "Generator works; CRIS endpoint required"),
+        ("CRIS/TMS", "Spatial acceleration + processed peaks", "MDB-preferred handoff package; open ASCII files included where MDB population is not available", "Generator works; CRIS endpoint required"),
     ], [1.15, 2.1, 2.15, 1.1], 8)
     doc.add_heading("9.1 Cloud-to-gateway configuration JSON", level=2)
     add_code(doc, """GET /api/v1/config?gatewayId=GW_BOGIE_001&route=Bangalore-Chennai
@@ -528,12 +529,12 @@ Content-Type: application/json
   }]
 }""")
     doc.add_heading("9.3 CRIS/TMS handoff package", level=2)
-    doc.add_paragraph("The specification does not require a file named 'TMS.csv'. It requires two data types to be transferred to TMS: spatial acceleration data and processed data having peaks. The reference implementation writes these two open ASCII-compatible datasets as CSV files and also includes an optional MDB container when the runtime supports it.")
+    doc.add_paragraph("The specification does not say the data should be stored in MMD. MMD is a physical clearance envelope. The data-file preference mentioned for TMS is MDB. The same clause also allows storage in a database or ASCII file compatible with TMS. Therefore, the production target should be MDB when CRIS requires it, while the reference cloud keeps PostgreSQL as the live database and includes open ASCII/CSV datasets so the two required data types are documented and importable.")
     add_table(doc, ["File", "Content"], [
         ("spatial_acceleration_export.csv", "RMS spatial records with session, position, GPS, validity and nine axes"),
         ("processed_peak_export.csv", "One row per peak axis/window with position, GPS, speed and alert flag"),
         ("README_MDB_EXPORT.txt", "Schema/import guidance"),
-        ("uabams_tms_target.mdb", "Valid empty Jet container when supported; populated CSV remains authoritative on Linux"),
+        ("uabams_tms_target.mdb", "Preferred TMS container. On Linux/Render this can be created as a valid empty container; populated MDB requires Windows Jet/ACE import"),
     ], [2.25, 4.25], 8.5)
     add_callout(doc, "MMD clarification", "MMD is not a TMS data file and not a CSV export. Maximum Moving Dimension compliance is a mechanical/hardware installation requirement for accelerometers, system hardware, and mounting brackets within the IR Schedule of Dimension envelope. The cloud can store a compliance document or audit reference, but it cannot prove MMD by itself.", AMBER)
 
@@ -604,14 +605,14 @@ GROUP BY a.id ORDER BY a.upload_received_utc DESC;""")
         ("Define what cloud receives/sends", "Covered in Sections 5 and 9", "Freeze endpoint URLs, auth, and ownership"),
         ("JSON and binary formats", "Metadata and demo JSON plus packed records documented", "Use metadata v1.0; test golden binary fixtures"),
         ("Gateway connects to cloud", "HTTP PUT contract implemented", "Use HTTPS, Content-Length, device identity, retries"),
-        ("Database/ASCII storage", "PostgreSQL + open ASCII/CSV export implemented", "Configure backups and migration ownership"),
+        ("Database/ASCII storage", "PostgreSQL database implemented; open ASCII export included for compatibility", "Configure backups and migration ownership"),
         ("Spatial acceleration", "rms_records parser implemented", "Prove with real rms_25cm.bin"),
         ("Processed peaks", "peak_records parser implemented", "Prove all nine axes and sentinel cases"),
         ("GPS safety alerts", "Archive rule engine and UI implemented", "Complete realtime gateway POST and SMS provider"),
         ("Route-wise thresholds", "Implemented in cloud UI/DB", "Agree config schema and gateway acknowledgement"),
         ("Permanent raw retention", "Code writes files, but current Render disk is not durable", "Add object storage before production"),
-        ("CRIS/TMS transfer", "Two required datasets packaged as open ASCII/CSV plus optional MDB; HTTP delivery code implemented", "Obtain final CRIS protocol, schema, URL and credentials"),
-        ("MDB preference", "Valid container optional; not populated on Linux", "Use approved CSV or Windows-side ACE import after CRIS agreement"),
+        ("CRIS/TMS transfer", "Two required datasets packaged for MDB-preferred handoff; HTTP delivery code implemented", "Obtain final CRIS protocol, schema, URL and credentials"),
+        ("MDB preference", "MDB is the preferred TMS container; populated MDB requires Windows Jet/ACE or final CRIS import process", "Use MDB as final target when CRIS confirms schema/tooling"),
         ("MMD/SOD compliance", "Not a cloud data export; documented as hardware evidence", "Hardware team must prove envelope compliance from drawings/measurements"),
     ], [2.35, 1.8, 2.35], 7.8)
 
