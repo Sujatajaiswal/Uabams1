@@ -2,9 +2,11 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func
 
 from app.config import settings
-from app.database import Base, engine
+from app import models
+from app.database import Base, SessionLocal, engine
 from app.routers import (
     alerts, archive, calibration, config, dashboard, gateways, maintenance,
     route_files, sections, threshold, tms_export, trains,
@@ -67,6 +69,21 @@ def on_startup():
 @app.get("/health", tags=["health"])
 def health_check():
     return {"status": "ok", "service": "uabams-cloud-api"}
+
+
+@app.get("/health/db", tags=["health"])
+def database_health_check():
+    db = SessionLocal()
+    try:
+        return {
+            "status": "ok",
+            "database": "postgresql" if settings.DATABASE_URL.startswith("postgresql") else "sqlite",
+            "gatewaySessions": db.query(func.count(models.GatewaySession.id)).scalar() or 0,
+            "alerts": db.query(func.count(models.Alert.id)).scalar() or 0,
+            "gateways": db.query(func.count(models.Gateway.gateway_id)).scalar() or 0,
+        }
+    finally:
+        db.close()
 
 
 @app.get("/", tags=["health"])

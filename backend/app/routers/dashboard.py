@@ -90,14 +90,15 @@ def get_dashboard(db: Session = Depends(get_db)):
         )
 
     # ---- Threshold violations over time (last 14 days, by severity) ------
+    alert_day = func.date(models.Alert.created_at)
     violation_rows = (
         db.query(
-            func.date(models.Alert.created_at).label("day"),
+            alert_day.label("day"),
             models.Alert.severity,
             func.count(models.Alert.id),
         )
         .filter(models.Alert.created_at >= now - timedelta(days=14))
-        .group_by("day", models.Alert.severity)
+        .group_by(alert_day, models.Alert.severity)
         .all()
     )
     by_day: dict = {}
