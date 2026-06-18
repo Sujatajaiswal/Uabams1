@@ -6,6 +6,7 @@ import {
   Gauge,
   AlertTriangle,
   TrainFront,
+  Database,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/threshold-settings', label: 'Threshold Settings', icon: SlidersHorizontal },
   { to: '/calibration', label: 'Calibration', icon: Gauge },
   { to: '/alerts', label: 'Alerts', icon: AlertTriangle },
+  { to: '/cloud-data', label: 'Cloud Data', icon: Database },
 ]
 
 export default function Sidebar() {

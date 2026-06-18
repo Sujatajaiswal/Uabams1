@@ -5,6 +5,7 @@ import GatewayUploadPage from './pages/GatewayUploadPage'
 import ThresholdSettingsPage from './pages/ThresholdSettingsPage'
 import CalibrationPage from './pages/CalibrationPage'
 import AlertsPage from './pages/AlertsPage'
+import CloudDataPage from './pages/CloudDataPage'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/threshold-settings" element={<ThresholdSettingsPage />} />
           <Route path="/calibration" element={<CalibrationPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/cloud-data" element={<CloudDataPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

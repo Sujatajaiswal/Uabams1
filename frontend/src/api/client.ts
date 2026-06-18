@@ -29,6 +29,41 @@ export async function getGateways(): Promise<GatewayStatus[]> {
   return data
 }
 
+export interface CloudDataEndpoint<T = unknown> {
+  key: string
+  label: string
+  path: string
+  data: T
+}
+
+export const CLOUD_DATA_ENDPOINTS = [
+  { key: 'dashboard', label: 'Dashboard Summary', path: '/api/v1/dashboard' },
+  { key: 'alerts', label: 'Alerts', path: '/api/v1/alerts' },
+  { key: 'threshold', label: 'Route Thresholds', path: '/api/v1/threshold' },
+  { key: 'calibration', label: 'Calibration History', path: '/api/v1/calibration' },
+  { key: 'gateways', label: 'Gateways', path: '/api/v1/gateways' },
+  {
+    key: 'notificationDeliveries',
+    label: 'Notification Deliveries',
+    path: '/api/v1/maintenance/notification-deliveries',
+  },
+  {
+    key: 'tmsDeliveries',
+    label: 'TMS Deliveries',
+    path: '/api/v1/maintenance/tms-deliveries',
+  },
+] as const
+
+export async function getCloudDataEndpoints(): Promise<CloudDataEndpoint[]> {
+  const responses = await Promise.all(
+    CLOUD_DATA_ENDPOINTS.map(async (endpoint) => {
+      const { data } = await api.get(endpoint.path)
+      return { ...endpoint, data }
+    }),
+  )
+  return responses
+}
+
 export async function getAlerts(params?: { severity?: string; route?: string }): Promise<AlertRecord[]> {
   const { data } = await api.get<AlertRecord[]>('/api/v1/alerts', { params })
   return data
