@@ -105,7 +105,10 @@ def get_dashboard(db: Session = Depends(get_db)):
     for day, severity, count in violation_rows:
         day_str = str(day)
         by_day.setdefault(day_str, {"critical": 0, "warning": 0, "info": 0})
-        by_day[day_str][severity.lower()] = count
+        severity_key = (severity or "Info").lower()
+        if severity_key not in by_day[day_str]:
+            severity_key = "info"
+        by_day[day_str][severity_key] += count
     threshold_violations = [
         schemas.ThresholdViolationPoint(
             date=day_str,
