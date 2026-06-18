@@ -63,19 +63,21 @@ except ImportError:  # pragma: no cover
 
 
 SPATIAL_HEADERS = [
-    "SessionId", "GatewayId", "TrainId", "Route", "AxleId",
-    "Timestamp", "Latitude", "Longitude", "SpeedKmph",
-    "VerticalAccelerationG", "LateralAccelerationG",
+    "SessionId", "GatewayId", "TrainId", "Route", "Timestamp",
+    "MasterCount", "PositionMm", "Latitude", "Longitude", "GpsValid",
+    "ValidMask", "AlXMilliG", "AlYMilliG", "AlZMilliG", "ArXMilliG",
+    "ArYMilliG", "ArZMilliG", "BgXMilliG", "BgYMilliG", "BgZMilliG",
 ]
 
 PEAK_HEADERS = [
-    "SessionId", "GatewayId", "TrainId", "Route", "AxleId",
-    "Timestamp", "Latitude", "Longitude", "SpeedKmph",
-    "RmsG", "PeakG", "ThresholdExceeded", "Severity", "NearestTrackFeatureKm",
+    "SessionId", "GatewayId", "TrainId", "Route", "Timestamp",
+    "WindowStartMm", "WindowEndMm", "SpeedKmph", "ValidMask",
+    "AlertGenerated", "Axis", "PeakValueMilliG", "PeakPositionMm",
+    "PeakMasterCount", "PeakLatitude", "PeakLongitude",
 ]
 
 
-def _rows_for_period(db: Session, days: int):
+def _summary_rows_for_period(db: Session, days: int):
     cutoff = datetime.utcnow() - timedelta(days=days)
     rows = (
         db.query(models.AxleRecord, models.GatewaySession)
@@ -87,40 +89,88 @@ def _rows_for_period(db: Session, days: int):
     return rows
 
 
+def _icd_sessions_for_period(db: Session, days: int):
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    return (
+        db.query(models.GatewaySession)
+        .join(models.Archive, models.Archive.session_name == models.GatewaySession.session_id)
+        .filter(models.GatewaySession.timestamp >= cutoff)
+        .order_by(models.GatewaySession.timestamp.asc())
+        .all()
+    )
+
+
 def build_spatial_csv(db: Session, days: int) -> str:
-    """Dataset (i): geo-tagged acceleration readings (clause 2.5.i)."""
+    """Dataset (i): spatial acceleration records from ICD rms_25cm.bin."""
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(SPATIAL_HEADERS)
-    for axle, session in _rows_for_period(db, days):
+
+    sessions = _icd_sessions_for_period(db, days)
+    if sessions:
+        for session in sessions:
+            rows = (
+                db.query(models.RmsRecord)
+                .filter_by(session_id=session.id)
+                .order_by(models.RmsRecord.position_mm.asc())
+                .all()
+            )
+            for rms in rows:
+                writer.writerow([
+                    session.session_id, session.gateway_id, session.train_id, session.route,
+                    session.timestamp.isoformat(), rms.master_count, rms.position_mm,
+                    rms.latitude, rms.longitude, "Y" if rms.gps_valid else "N",
+                    rms.valid_mask, rms.al_x_mg, rms.al_y_mg, rms.al_z_mg,
+                    rms.ar_x_mg, rms.ar_y_mg, rms.ar_z_mg,
+                    rms.bg_x_mg, rms.bg_y_mg, rms.bg_z_mg,
+                ])
+        return buf.getvalue()
+
+    # Demo fallback: keep exports useful before any real gateway ZIP has arrived.
+    for axle, session in _summary_rows_for_period(db, days):
         writer.writerow([
             session.session_id, session.gateway_id, session.train_id, session.route,
-            axle.axle_id, session.timestamp.isoformat(), session.lat, session.lon,
-            session.speed_kmph, axle.vertical_g, axle.lateral_g,
+            session.timestamp.isoformat(), "", "", session.lat, session.lon, "Y",
+            "", "", "", round(axle.vertical_g * 1000), "", round(axle.lateral_g * 1000),
+            "", "", "", "",
         ])
     return buf.getvalue()
 
 
 def build_peak_csv(db: Session, days: int) -> str:
-    """Dataset (ii): processed peak data with alert/severity context (clause 2.5.ii)."""
-    cutoff = datetime.utcnow() - timedelta(days=days)
-    alerts_by_session_axle = {}
-    alert_rows = db.query(models.Alert).filter(models.Alert.created_at >= cutoff).all()
-    for a in alert_rows:
-        alerts_by_session_axle[(a.session_id, a.axle_id)] = a
-
+    """Dataset (ii): processed peak records from ICD peak_50m.bin."""
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(PEAK_HEADERS)
-    for axle, session in _rows_for_period(db, days):
-        alert = alerts_by_session_axle.get((session.id, axle.axle_id))
+
+    sessions = _icd_sessions_for_period(db, days)
+    if sessions:
+        for session in sessions:
+            rows = (
+                db.query(models.PeakRecord)
+                .filter_by(session_id=session.id)
+                .order_by(models.PeakRecord.window_start_mm.asc())
+                .all()
+            )
+            for peak in rows:
+                for axis, axis_data in peak.axes.items():
+                    writer.writerow([
+                        session.session_id, session.gateway_id, session.train_id, session.route,
+                        session.timestamp.isoformat(), peak.window_start_mm, peak.window_end_mm,
+                        peak.speed_kmph, peak.valid_mask, "Y" if peak.alert_generated else "N",
+                        axis, axis_data.get("peakValueMg"), axis_data.get("peakPositionMm"),
+                        axis_data.get("peakMasterCount"), axis_data.get("peakLat"),
+                        axis_data.get("peakLon"),
+                    ])
+        return buf.getvalue()
+
+    # Demo fallback: old synthetic uploads have summary peak rows only.
+    for axle, session in _summary_rows_for_period(db, days):
         writer.writerow([
             session.session_id, session.gateway_id, session.train_id, session.route,
-            axle.axle_id, session.timestamp.isoformat(), session.lat, session.lon,
-            session.speed_kmph, axle.rms, axle.peak,
-            "Y" if alert else "N",
-            alert.severity if alert else "",
-            alert.nearest_track_feature_km if alert else "",
+            session.timestamp.isoformat(), "", "", session.speed_kmph, "",
+            "Y" if axle.peak > 0 else "N", axle.axle_id, round(axle.peak * 1000),
+            "", "", session.lat, session.lon,
         ])
     return buf.getvalue()
 
@@ -184,11 +234,16 @@ def build_tms_export_zip(db: Session, days: int = 30) -> bytes:
 
         if MDB_AVAILABLE:
             import tempfile, os
-            with tempfile.TemporaryDirectory() as tmp:
-                mdb_path = os.path.join(tmp, "uabams_tms_target.mdb")
-                msaccessdb.create(mdb_path)
-                with open(mdb_path, "rb") as f:
-                    zf.writestr("uabams_tms_target.mdb", f.read())
+            try:
+                with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+                    mdb_path = os.path.join(tmp, "uabams_tms_target.mdb")
+                    msaccessdb.create(mdb_path)
+                    with open(mdb_path, "rb") as f:
+                        zf.writestr("uabams_tms_target.mdb", f.read())
+            except OSError:
+                # Some locked-down Windows temp folders refuse msaccessdb's
+                # file writes. The two required open CSV datasets remain valid.
+                pass
 
     zip_buf.seek(0)
     return zip_buf.getvalue()

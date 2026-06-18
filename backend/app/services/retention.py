@@ -1,17 +1,10 @@
 """
-Data retention per clauses 6.3 and 6.4.
+Data retention per the RDSO spec and the gateway ICD.
 
-Clause 6.3 ("discrete data in time domain... retained for seven days...
-afterwards deleted") governs raw waveform capture. This cloud system never
-stores raw waveform - the gateway only ever sends processed per-axle
-peak/RMS summaries (see README "Spec alignment notes") - so clause 6.3 has
-no corresponding data here to purge.
-
-Clause 6.4 ("acceleration data in space domain at the sampling interval of
-25cm and generated alert reports are to be stored in intermediate server
-for every run for latest 30 days from date of recording") DOES apply: the
-axle_records and alerts tables are exactly that space-domain/alert data,
-so this module purges anything older than the configured retention window.
+Working parsed data older than the configured window can be purged from
+query tables. Original ZIP archives and extracted raw/binary artifacts are
+not deleted here: ICD section 12.6 requires permanent retention of the
+authoritative archive and unchanged extracted binary files.
 
 In production this would run as a daily scheduled job (e.g. a Render cron
 job or APScheduler). It's exposed here as an explicit, auditable endpoint
@@ -38,6 +31,16 @@ def purge_expired_data(db: Session, retention_days: int = 30):
     axle_deleted = 0
     alerts_deleted = 0
     if session_ids:
+        db.query(models.RmsRecord).filter(
+            models.RmsRecord.session_id.in_(session_ids)
+        ).delete(synchronize_session=False)
+        db.query(models.PeakRecord).filter(
+            models.PeakRecord.session_id.in_(session_ids)
+        ).delete(synchronize_session=False)
+        db.query(models.FaultRecord).filter(
+            models.FaultRecord.session_id.in_(session_ids)
+        ).delete(synchronize_session=False)
+
         axle_deleted = (
             db.query(models.AxleRecord)
             .filter(models.AxleRecord.session_id.in_(session_ids))

@@ -136,3 +136,22 @@ The parsed records are stored in SQLite/PostgreSQL tables:
 `archives`, `extracted_files`, `rms_records`, `peak_records`,
 `fault_records`, plus dashboard summary rows in `gateway_sessions` and
 `axle_records`.
+
+## RDSO/TMS Mapping
+
+The RDSO paragraph covering intermediate-server storage and TMS hand-off maps
+to this implementation as follows:
+
+- "database or ASCII file": SQLite locally and PostgreSQL in cloud, with CSV
+  export files for open documented hand-off.
+- "spatial acceleration data": parsed from `rms/rms_25cm.bin` into
+  `rms_records`, then exported as `spatial_acceleration_export.csv`.
+- "processed data having peaks": parsed from `peak/peak_50m.bin` into
+  `peak_records`, then exported as `processed_peak_export.csv`.
+- "preferably MDB": export includes a target MDB container when the runtime can
+  create it; the CSV files remain the authoritative open data files for CRIS/TMS
+  import.
+- "route-wise limits editable by purchaser": implemented in Threshold Settings
+  and stored in `threshold_settings`.
+- "alerts containing value and GPS location": implemented in `alerts`, derived
+  from uploaded session GPS/peak data and shown on the Alerts map.
