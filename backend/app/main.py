@@ -55,6 +55,9 @@ def on_startup():
     # Demo-friendly schema bootstrap. In a real production rollout this
     # would be replaced by Alembic migrations (see README).
     Base.metadata.create_all(bind=engine)
+    from app.services.schema_compat import ensure_schema_compatibility
+
+    ensure_schema_compatibility()
     logger.info("Database tables ensured.")
 
     if settings.SEED_ON_STARTUP:
