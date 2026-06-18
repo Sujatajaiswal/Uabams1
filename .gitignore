@@ -6,7 +6,9 @@ __pycache__/
 .venv/
 venv/
 *.db
+*.db-journal
 _tmp_*
+archives/
 
 # Node / frontend
 node_modules/

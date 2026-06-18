@@ -18,6 +18,10 @@ def _database_url() -> str:
 
 class Settings:
     DATABASE_URL: str = _database_url()
+    ARCHIVE_STORAGE_DIR: str = os.getenv(
+        "ARCHIVE_STORAGE_DIR",
+        str(Path(gettempdir()) / "uabams-cloud" / "archives"),
+    )
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
     DEFAULT_SAMPLING_RATE: int = int(os.getenv("DEFAULT_SAMPLING_RATE", "2500"))
     GATEWAY_OFFLINE_AFTER_SECONDS: int = int(

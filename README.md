@@ -93,7 +93,7 @@ Important variables:
 |---|---|---|
 | `GET` | `/health` | Backend health check |
 | `GET` | `/api/v1/dashboard` | Dashboard data |
-| `POST` | `/api/v1/archive` | Upload a gateway archive/demo payload |
+| `PUT`/`POST` | `/api/v1/archive` | Upload a real gateway ZIP archive or JSON demo payload |
 | `GET`/`POST` | `/api/v1/threshold` | Threshold settings |
 | `GET`/`POST` | `/api/v1/calibration` | Calibration history |
 | `GET` | `/api/v1/alerts` | Alerts |
@@ -109,3 +109,30 @@ cd backend
 venv\Scripts\activate
 python scripts\gateway_simulator.py --url http://localhost:8000 --interval 5
 ```
+
+## Gateway ZIP Storage
+
+The cloud endpoint now supports the ICD gateway archive format:
+
+```text
+session_metadata.json
+rms/rms_25cm.bin
+peak/peak_50m.bin
+faults/faults.bin
+raw/adxl_left.bin
+raw/adxl_right.bin
+raw/bogie.bin
+raw/encoder.bin
+```
+
+Original ZIPs and extracted binary files are preserved unchanged under
+`ARCHIVE_STORAGE_DIR`, which defaults to the OS temp folder:
+
+```text
+C:\Users\Pilabs\AppData\Local\Temp\uabams-cloud\archives
+```
+
+The parsed records are stored in SQLite/PostgreSQL tables:
+`archives`, `extracted_files`, `rms_records`, `peak_records`,
+`fault_records`, plus dashboard summary rows in `gateway_sessions` and
+`axle_records`.

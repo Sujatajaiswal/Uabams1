@@ -21,6 +21,11 @@ from app import models, schemas
 from app.database import get_db
 from app.services import validation
 from app.services.alerts import evaluate_alerts, get_or_default_threshold
+from app.services.gateway_archive import (
+    archive_name_from_headers,
+    ingest_gateway_zip,
+    looks_like_gateway_zip,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["archive"])
 
@@ -52,6 +57,14 @@ async def _handle_archive(request: Request, db: Session) -> schemas.ArchiveRespo
     raw_body = await request.body()
     if not raw_body:
         raise HTTPException(status_code=400, detail="Empty request body")
+
+    if looks_like_gateway_zip(raw_body):
+        return ingest_gateway_zip(
+            raw_body,
+            db,
+            archive_name=archive_name_from_headers(request.headers),
+            route=request.headers.get("x-route"),
+        )
 
     payload_dict = _extract_json_payload(content_type, raw_body)
 

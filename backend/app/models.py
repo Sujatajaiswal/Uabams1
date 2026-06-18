@@ -66,6 +66,97 @@ class GatewaySession(Base):
     alerts = relationship("Alert", back_populates="session")
 
 
+class Archive(Base):
+    """Authoritative gateway ZIP upload artifact, per ICD sections 12-14."""
+    __tablename__ = "archives"
+    __table_args__ = (
+        UniqueConstraint("gateway_id", "session_name", name="uq_archive_gateway_session"),
+        Index("ix_archive_received", "upload_received_utc"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    gateway_id = Column(String(64), nullable=False, index=True)
+    train_id = Column(String(64), nullable=False, index=True)
+    session_name = Column(String(64), nullable=False)
+    archive_name = Column(String(255), nullable=False)
+    archive_size_bytes = Column(Integer, nullable=False)
+    upload_received_utc = Column(DateTime, default=datetime.utcnow, nullable=False)
+    storage_uri = Column(String(512), nullable=False)
+    checksum = Column(String(64), nullable=False)
+    validation_status = Column(String(32), nullable=False, default="ok")
+    missing_files = Column(JSON, nullable=True)
+    metadata_json = Column("metadata", JSON, nullable=True)
+
+
+class ExtractedFile(Base):
+    """Unmodified extracted files preserved from a gateway ZIP."""
+    __tablename__ = "extracted_files"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    archive_id = Column(Integer, ForeignKey("archives.id"), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey("gateway_sessions.id"), nullable=True, index=True)
+    file_relative_path = Column(String(255), nullable=False)
+    extracted_at_utc = Column(DateTime, default=datetime.utcnow, nullable=False)
+    file_size_bytes = Column(Integer, nullable=False)
+    storage_uri = Column(String(512), nullable=False)
+    integrity_ok = Column(Boolean, nullable=False, default=True)
+
+
+class RmsRecord(Base):
+    """Parsed ICD Rms25cmRecord, fixed 66-byte little-endian records."""
+    __tablename__ = "rms_records"
+    __table_args__ = (Index("ix_rms_session_position", "session_id", "position_mm"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    archive_id = Column(Integer, ForeignKey("archives.id"), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey("gateway_sessions.id"), nullable=False, index=True)
+    master_count = Column(Integer, nullable=False)
+    position_mm = Column(Integer, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    gps_valid = Column(Boolean, nullable=False)
+    valid_mask = Column(Integer, nullable=False)
+    al_x_mg = Column(Integer, nullable=False)
+    al_y_mg = Column(Integer, nullable=False)
+    al_z_mg = Column(Integer, nullable=False)
+    ar_x_mg = Column(Integer, nullable=False)
+    ar_y_mg = Column(Integer, nullable=False)
+    ar_z_mg = Column(Integer, nullable=False)
+    bg_x_mg = Column(Integer, nullable=False)
+    bg_y_mg = Column(Integer, nullable=False)
+    bg_z_mg = Column(Integer, nullable=False)
+
+
+class PeakRecord(Base):
+    """Parsed ICD PeakRecord50m, fixed 302-byte little-endian records."""
+    __tablename__ = "peak_records"
+    __table_args__ = (Index("ix_peak_session_window", "session_id", "window_start_mm"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    archive_id = Column(Integer, ForeignKey("archives.id"), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey("gateway_sessions.id"), nullable=False, index=True)
+    window_start_mm = Column(Integer, nullable=False)
+    window_end_mm = Column(Integer, nullable=False)
+    speed_kmph = Column(Float, nullable=False)
+    valid_mask = Column(Integer, nullable=False)
+    alert_generated = Column(Boolean, nullable=False)
+    axes = Column(JSON, nullable=False)
+
+
+class FaultRecord(Base):
+    """Parsed ICD FaultRecord, fixed 75-byte little-endian records."""
+    __tablename__ = "fault_records"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    archive_id = Column(Integer, ForeignKey("archives.id"), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey("gateway_sessions.id"), nullable=False, index=True)
+    timestamp_ms = Column(Integer, nullable=False)
+    fault_code = Column(Integer, nullable=False)
+    node_id = Column(Integer, nullable=False)
+    severity = Column(Integer, nullable=False)
+    description = Column(String(64), nullable=False)
+
+
 class AxleRecord(Base):
     """
     Per-axle sensor reading for a session. Serves both the 'rms_records'
