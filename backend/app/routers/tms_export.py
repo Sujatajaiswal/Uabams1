@@ -19,9 +19,9 @@ def export_to_tms(
     """
     Generates the Module 5/clause-2.5 deliverable for the CRIS TMS hand-off:
     a ZIP containing the two required datasets (spatial acceleration data,
-    processed peak data) as open CSV, plus a genuine empty target .mdb
-    container and an import script - see tms_export.py for the full
-    rationale behind this packaging.
+    processed peak data) as open documented ASCII text files, plus a
+    genuine empty target .mdb container. See tms_export.py for the full
+    rationale behind this MDB-preferred packaging.
     """
     zip_bytes = build_tms_export_zip(db, days=days)
     return StreamingResponse(

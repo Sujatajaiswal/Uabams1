@@ -529,14 +529,14 @@ Content-Type: application/json
   }]
 }""")
     doc.add_heading("9.3 CRIS/TMS handoff package", level=2)
-    doc.add_paragraph("The specification does not say the data should be stored in MMD. MMD is a physical clearance envelope. The data-file preference mentioned for TMS is MDB. The same clause also allows storage in a database or ASCII file compatible with TMS. Therefore, the production target should be MDB when CRIS requires it, while the reference cloud keeps PostgreSQL as the live database and includes open ASCII/CSV datasets so the two required data types are documented and importable.")
+    doc.add_paragraph("The specification does not say the data should be stored in MMD. MMD is a physical clearance envelope. The data-file preference mentioned for TMS is MDB. The same clause also allows storage in a database or ASCII file compatible with TMS. Therefore, the production target should be MDB when CRIS requires it, while the reference cloud keeps PostgreSQL as the live database and includes open ASCII text datasets so the two required data types are documented and importable.")
     add_table(doc, ["File", "Content"], [
-        ("spatial_acceleration_export.csv", "RMS spatial records with session, position, GPS, validity and nine axes"),
-        ("processed_peak_export.csv", "One row per peak axis/window with position, GPS, speed and alert flag"),
+        ("spatial_acceleration_data.txt", "RMS spatial records with session, position, GPS, validity and nine axes"),
+        ("processed_peak_data.txt", "One row per peak axis/window with position, GPS, speed and alert flag"),
         ("README_MDB_EXPORT.txt", "Schema/import guidance"),
         ("uabams_tms_target.mdb", "Preferred TMS container. On Linux/Render this can be created as a valid empty container; populated MDB requires Windows Jet/ACE import"),
     ], [2.25, 4.25], 8.5)
-    add_callout(doc, "MMD clarification", "MMD is not a TMS data file and not a CSV export. Maximum Moving Dimension compliance is a mechanical/hardware installation requirement for accelerometers, system hardware, and mounting brackets within the IR Schedule of Dimension envelope. The cloud can store a compliance document or audit reference, but it cannot prove MMD by itself.", AMBER)
+    add_callout(doc, "MMD clarification", "MMD is not a TMS data file. Maximum Moving Dimension compliance is a mechanical/hardware installation requirement for accelerometers, system hardware, and mounting brackets within the IR Schedule of Dimension envelope. The cloud can store a compliance document or audit reference, but it cannot prove MMD by itself.", AMBER)
 
     doc.add_heading("9.4 MMD/SOD compliance evidence for implementers", level=2)
     add_table(doc, ["Evidence item", "Owner", "Cloud role"], [

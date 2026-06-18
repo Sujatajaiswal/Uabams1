@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Database, Download, FileJson, RefreshCcw, Table2 } from 'lucide-react'
+import { Database, Download, FileJson, RefreshCcw } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import {
   CLOUD_DATA_ENDPOINTS,
@@ -46,20 +46,6 @@ function rowsFromData(data: unknown): FlatRow[] {
   if (Array.isArray(data)) return data.map((item) => flatten(item))
   if (isRecord(data)) return [flatten(data)]
   return [{ value: toCell(data) }]
-}
-
-function escapeCsv(value: unknown) {
-  const text = value == null ? '' : String(value)
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
-}
-
-function toCsv(rows: FlatRow[]) {
-  if (rows.length === 0) return ''
-  const headers = Array.from(new Set(rows.flatMap((row) => Object.keys(row))))
-  return [
-    headers.map(escapeCsv).join(','),
-    ...rows.map((row) => headers.map((header) => escapeCsv(row[header])).join(',')),
-  ].join('\n')
 }
 
 function downloadText(filename: string, content: string, mimeType: string) {
@@ -162,14 +148,6 @@ export default function CloudDataPage() {
     downloadText('uabams-cloud-data-snapshot.json', JSON.stringify(payload, null, 2), 'application/json')
   }
 
-  function downloadAllAsciiSnapshot() {
-    const blocks = sections.map((section) => {
-      const rows = rowsFromData(section.data)
-      return [`# ${section.label}`, `# ${API_BASE}${section.path}`, toCsv(rows)].join('\n')
-    })
-    downloadText('uabams-cloud-data-ascii-snapshot.csv', blocks.join('\n\n'), 'text/csv')
-  }
-
   async function handleTmsExport() {
     setExportingTms(true)
     try {
@@ -234,14 +212,6 @@ export default function CloudDataPage() {
               Download JSON
             </button>
             <button
-              onClick={downloadAllAsciiSnapshot}
-              disabled={loading || sections.length === 0}
-              className="inline-flex items-center gap-2 rounded-md bg-rail-navy px-3 py-2 text-[12.5px] font-medium text-white hover:bg-rail-navyLight disabled:opacity-60"
-            >
-              <Table2 size={14} />
-              ASCII Snapshot
-            </button>
-            <button
               onClick={handleTmsExport}
               disabled={exportingTms}
               className="inline-flex items-center gap-2 rounded-md border border-rail-line bg-white px-3 py-2 text-[12.5px] font-medium text-rail-steel hover:border-rail-blue/50 disabled:opacity-60"
@@ -255,7 +225,6 @@ export default function CloudDataPage() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {(loading ? CLOUD_DATA_ENDPOINTS : sections).map((section) => {
             const data = 'data' in section ? section.data : []
-            const rows = rowsFromData(data)
             return (
               <div key={section.key} className="panel overflow-hidden">
                 <div className="panel-header">
@@ -283,13 +252,6 @@ export default function CloudDataPage() {
                       >
                         <FileJson size={13} />
                         JSON
-                      </button>
-                      <button
-                        onClick={() => downloadText(`uabams-${section.key}.csv`, toCsv(rows), 'text/csv')}
-                        className="inline-flex items-center gap-2 rounded-md border border-rail-line bg-white px-3 py-1.5 text-[12px] font-medium text-rail-steel hover:border-rail-blue/50"
-                      >
-                        <Table2 size={13} />
-                        CSV
                       </button>
                     </div>
                   </>

@@ -37,16 +37,14 @@ achievable package:
      Windows/Access-based TMS import tooling at CRIS has the right
      binary shell to import into).
   2. The two required datasets fully populated as open, documented ASCII
-     files using CSV structure (explicitly permitted by clause 2.5's
-     first sentence and clause 2.6 "All file formats shall be open and
-     documented").
+     text files (explicitly permitted by clause 2.5's first sentence and
+     clause 2.6 "All file formats shall be open and documented").
   3. Import guidance so a one-time manual/automated import on the
      Windows/Access side finishes the MDB population when CRIS requires
      the MDB container.
 
 This is documented in README.md under "TMS / MDB export".
 """
-import csv
 import io
 import zipfile
 from datetime import datetime, timedelta
@@ -77,6 +75,17 @@ PEAK_HEADERS = [
 ]
 
 
+def _ascii_cell(value) -> str:
+    if value is None:
+        return ""
+    return str(value).replace("|", "/").replace("\r", " ").replace("\n", " ")
+
+
+def _write_ascii_row(buf: io.StringIO, values) -> None:
+    buf.write("|".join(_ascii_cell(value) for value in values))
+    buf.write("\n")
+
+
 def _summary_rows_for_period(db: Session, days: int):
     cutoff = datetime.utcnow() - timedelta(days=days)
     rows = (
@@ -100,11 +109,10 @@ def _icd_sessions_for_period(db: Session, days: int):
     )
 
 
-def build_spatial_csv(db: Session, days: int) -> str:
+def build_spatial_ascii(db: Session, days: int) -> str:
     """Dataset (i): spatial acceleration records from ICD rms_25cm.bin."""
     buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(SPATIAL_HEADERS)
+    _write_ascii_row(buf, SPATIAL_HEADERS)
 
     sessions = _icd_sessions_for_period(db, days)
     if sessions:
@@ -116,7 +124,7 @@ def build_spatial_csv(db: Session, days: int) -> str:
                 .all()
             )
             for rms in rows:
-                writer.writerow([
+                _write_ascii_row(buf, [
                     session.session_id, session.gateway_id, session.train_id, session.route,
                     session.timestamp.isoformat(), rms.master_count, rms.position_mm,
                     rms.latitude, rms.longitude, "Y" if rms.gps_valid else "N",
@@ -128,7 +136,7 @@ def build_spatial_csv(db: Session, days: int) -> str:
 
     # Demo fallback: keep exports useful before any real gateway ZIP has arrived.
     for axle, session in _summary_rows_for_period(db, days):
-        writer.writerow([
+        _write_ascii_row(buf, [
             session.session_id, session.gateway_id, session.train_id, session.route,
             session.timestamp.isoformat(), "", "", session.lat, session.lon, "Y",
             "", "", "", round(axle.vertical_g * 1000), "", round(axle.lateral_g * 1000),
@@ -137,11 +145,10 @@ def build_spatial_csv(db: Session, days: int) -> str:
     return buf.getvalue()
 
 
-def build_peak_csv(db: Session, days: int) -> str:
+def build_peak_ascii(db: Session, days: int) -> str:
     """Dataset (ii): processed peak records from ICD peak_50m.bin."""
     buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(PEAK_HEADERS)
+    _write_ascii_row(buf, PEAK_HEADERS)
 
     sessions = _icd_sessions_for_period(db, days)
     if sessions:
@@ -154,7 +161,7 @@ def build_peak_csv(db: Session, days: int) -> str:
             )
             for peak in rows:
                 for axis, axis_data in peak.axes.items():
-                    writer.writerow([
+                    _write_ascii_row(buf, [
                         session.session_id, session.gateway_id, session.train_id, session.route,
                         session.timestamp.isoformat(), peak.window_start_mm, peak.window_end_mm,
                         peak.speed_kmph, peak.valid_mask, "Y" if peak.alert_generated else "N",
@@ -166,7 +173,7 @@ def build_peak_csv(db: Session, days: int) -> str:
 
     # Demo fallback: old synthetic uploads have summary peak rows only.
     for axle, session in _summary_rows_for_period(db, days):
-        writer.writerow([
+        _write_ascii_row(buf, [
             session.session_id, session.gateway_id, session.train_id, session.route,
             session.timestamp.isoformat(), "", "", session.speed_kmph, "",
             "Y" if axle.peak > 0 else "N", axle.axle_id, round(axle.peak * 1000),
@@ -183,9 +190,9 @@ TM/IM/434 (UABAMS), which requires two data files to be transferred to
 the CRIS TMS server. The preferred final container is MDB (Microsoft
 Access database), not MMD:
 
-  1. spatial_acceleration_export.csv  - dataset (i): geo-tagged
+  1. spatial_acceleration_data.txt    - dataset (i): geo-tagged
      vertical/lateral acceleration readings per axle, per session.
-  2. processed_peak_export.csv        - dataset (ii): processed data
+  2. processed_peak_data.txt          - dataset (ii): processed data
      having peaks, with threshold-exceedance and severity context.
 
 uabams_tms_target.mdb is a genuine, empty Microsoft Access (Jet 4)
@@ -212,11 +219,11 @@ installed):
 
   1. Open uabams_tms_target.mdb in Microsoft Access.
   2. External Data -> New Data Source -> From File -> Text File.
-  3. Import spatial_acceleration_export.csv as table "SpatialAcceleration".
-  4. Import processed_peak_export.csv as table "ProcessedPeaks".
+  3. Import spatial_acceleration_data.txt as table "SpatialAcceleration".
+  4. Import processed_peak_data.txt as table "ProcessedPeaks".
   5. Save. The .mdb now contains both RDSO-required datasets.
 
-This two-step hand-off (cloud generates the open, documented ASCII/CSV
+This two-step hand-off (cloud generates the open, documented ASCII
 datasets per clauses 2.5 and 2.6; a Windows-side import finalizes the
 MDB container when CRIS requires MDB) is the practical route until the
 final CRIS transfer protocol/schema is supplied.
@@ -229,7 +236,7 @@ MDB is the preferred TMS data-file/container format mentioned in clause
 MMD / SOD NOTE
 --------------
 Maximum Moving Dimension (MMD) compliance is not a TMS data file and is
-not exported as CSV. It is a mechanical/hardware installation compliance
+not exported as a data file. It is a mechanical/hardware installation compliance
 matter: accelerometers, brackets and system hardware must fit within the
 IR Schedule of Dimension envelope. The cloud can retain document/audit
 references if the project requires it, but it cannot prove physical MMD
@@ -238,13 +245,13 @@ clearance from acceleration data alone.
 
 
 def build_tms_export_zip(db: Session, days: int = 30) -> bytes:
-    spatial_csv = build_spatial_csv(db, days)
-    peak_csv = build_peak_csv(db, days)
+    spatial_ascii = build_spatial_ascii(db, days)
+    peak_ascii = build_peak_ascii(db, days)
 
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("spatial_acceleration_export.csv", spatial_csv)
-        zf.writestr("processed_peak_export.csv", peak_csv)
+        zf.writestr("spatial_acceleration_data.txt", spatial_ascii)
+        zf.writestr("processed_peak_data.txt", peak_ascii)
         zf.writestr("README_MDB_EXPORT.txt", MDB_README)
 
         if MDB_AVAILABLE:
@@ -257,7 +264,7 @@ def build_tms_export_zip(db: Session, days: int = 30) -> bytes:
                         zf.writestr("uabams_tms_target.mdb", f.read())
             except OSError:
                 # Some locked-down Windows temp folders refuse msaccessdb's
-                # file writes. The two required open CSV datasets remain valid.
+                # file writes. The two required open ASCII datasets remain valid.
                 pass
 
     zip_buf.seek(0)
