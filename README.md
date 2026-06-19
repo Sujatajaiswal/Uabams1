@@ -82,7 +82,8 @@ Important variables:
 - `GATEWAY_API_TOKEN`: optional gateway bearer token for `/api/v1/archive`
   and `/api/v1/config`
 - `VITE_API_TOKEN`: optional frontend token matching `API_AUTH_TOKEN`
-- `SMS_SERVER_URL`: optional SMS server endpoint for alert text messages
+- `SMS_SERVER_URL`: optional SMS server endpoint for alert text messages.
+  Use `demo` to simulate a working SMS server during review.
 - `SMS_SERVER_BEARER_TOKEN`: optional bearer token for the SMS server
 - `SMS_RECIPIENTS`: comma-separated mobile numbers / recipient IDs
 - `ALERT_NOTIFICATION_WEBHOOK_URL`: optional generic notification webhook
@@ -181,10 +182,11 @@ specification.
   and stored in `threshold_settings`.
 - "alerts containing value and GPS location": implemented in `alerts`, derived
   from uploaded session GPS/peak data and shown on the Alerts map.
-- "SMS/notification alerts": implemented as auditable delivery rows. Configure
-  `SMS_SERVER_URL`, `SMS_SERVER_BEARER_TOKEN`, and `SMS_RECIPIENTS` to push
-  alert SMS messages; `ALERT_NOTIFICATION_WEBHOOK_URL` remains available for a
-  generic notification provider.
+- "SMS/notification alerts": implemented as auditable delivery rows. For demo,
+  set `SMS_SERVER_URL=demo` and alerts will be marked sent by the built-in demo
+  SMS server. For production, configure `SMS_SERVER_URL`,
+  `SMS_SERVER_BEARER_TOKEN`, and `SMS_RECIPIENTS`; `ALERT_NOTIFICATION_WEBHOOK_URL`
+  remains available for a generic notification provider.
 - "transfer to CRIS server": implemented as a TMS delivery service. Default
   local mode writes the ZIP to disk for hand-off; configure
   `TMS_DELIVERY_MODE=http` and `TMS_HTTP_URL` when CRIS provides the receiving

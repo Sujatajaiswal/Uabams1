@@ -41,6 +41,12 @@ def notification_deliveries(
             "channel": row.channel,
             "status": row.status,
             "recipient": row.recipient,
+            "message": (
+                row.request_payload.get("message")
+                if isinstance(row.request_payload, dict)
+                else None
+            ),
+            "providerMessageId": row.provider_message_id,
             "createdAt": row.created_at,
             "sentAt": row.sent_at,
             "errorMessage": row.error_message,

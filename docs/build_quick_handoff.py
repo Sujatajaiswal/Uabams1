@@ -173,7 +173,7 @@ def build():
         ("Cloud storage", "PostgreSQL tables: gateways, gateway_sessions, axle_records, alerts, threshold_settings, calibration, archives, rms_records, peak_records, fault_records, notification_deliveries, tms_deliveries."),
         ("Processing", "Authenticate request, validate upload, parse records, calculate dashboard summaries, compare peak values with route-wise vertical/lateral thresholds, generate GPS alerts."),
         ("Cloud sends to gateway", "Configuration JSON: route threshold, wheel wear/correction factor, sampling rate. Gateway polling/ack should be finalized in production."),
-        ("Cloud sends to SMS server", "When an alert is generated, cloud posts SMS JSON to SMS_SERVER_URL and stores success/failure in notification_deliveries."),
+        ("Cloud sends to SMS server", "When an alert is generated, cloud posts SMS JSON to SMS_SERVER_URL and stores success/failure in notification_deliveries. For demo, set SMS_SERVER_URL=demo."),
         ("Cloud sends to TMS/CRIS", "MDB-preferred handoff package containing spatial acceleration data and processed peak data. ASCII text files are included only as open documented fallback/import data."),
     ], [1.65, 5.1], 7.5)
 
@@ -219,7 +219,7 @@ SMS server JSON:
         ("API_AUTH_TOKEN", "Operator/frontend API authentication"),
         ("GATEWAY_API_TOKEN", "Gateway archive/config authentication"),
         ("VITE_API_TOKEN", "Frontend token matching API_AUTH_TOKEN"),
-        ("SMS_SERVER_URL", "SMS server endpoint for alert messages"),
+        ("SMS_SERVER_URL", "SMS server endpoint for alert messages; use demo for review"),
         ("SMS_SERVER_BEARER_TOKEN", "SMS server authentication token"),
         ("SMS_RECIPIENTS", "Comma-separated officials/recipient numbers"),
     ], [2.2, 4.55], 7.2)

@@ -56,6 +56,18 @@ def _sms_payload(alert: models.Alert, session: models.GatewaySession | None) -> 
 
 
 def _post_json(url: str, payload: dict, bearer_token: str = "") -> tuple[str, datetime | None, dict | None, str | None]:
+    if url.lower() in {"demo", "internal://demo", "demo://sms"}:
+        return (
+            "sent",
+            datetime.utcnow(),
+            {
+                "provider": "demo-sms-server",
+                "messageId": f"demo-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}",
+                "accepted": True,
+            },
+            None,
+        )
+
     headers = {}
     if bearer_token:
         headers["Authorization"] = f"Bearer {bearer_token}"
@@ -110,6 +122,8 @@ def queue_or_send_alert_notifications(
         deliveries.append(delivery)
 
         sms_payload = _sms_payload(alert, session)
+        if sms_url.lower() in {"demo", "internal://demo", "demo://sms"} and not sms_payload["to"]:
+            sms_payload["to"] = ["DEMO_REVIEWER"]
         sms_delivery = models.NotificationDelivery(
             alert_id=alert.id,
             channel="sms" if sms_url else "sms_outbox",
@@ -130,6 +144,8 @@ def queue_or_send_alert_notifications(
             sms_delivery.sent_at = sent_at
             sms_delivery.response_payload = response_payload
             sms_delivery.error_message = error
+            if response_payload and response_payload.get("messageId"):
+                sms_delivery.provider_message_id = response_payload["messageId"]
 
         deliveries.append(sms_delivery)
 
