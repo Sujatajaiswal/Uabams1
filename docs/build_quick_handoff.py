@@ -167,12 +167,13 @@ def build():
     doc.add_section(WD_SECTION.NEW_PAGE)
     doc.add_heading("2. What Cloud Receives, Stores, Processes, Sends", level=1)
     table(doc, ["Area", "Required structure / data type"], [
-        ("Gateway connection", "HTTPS PUT/POST to /api/v1/archive. Body is a closed session archive or demo JSON during review. Production must add gateway token/mTLS."),
+        ("Gateway connection", "HTTPS PUT/POST to /api/v1/archive. Body is a closed session archive or demo JSON during review. Production uses bearer token/API key; mTLS can be added by deployer."),
         ("Received metadata JSON", "schemaVersion string, gatewayId string, trainId string, sessionName string, sessionStatus string, createdUtc ISO datetime."),
         ("Received measurement data", "Spatial acceleration records, processed peak records, GPS latitude/longitude, speed, axle ID, metric, timestamp, fault records."),
         ("Cloud storage", "PostgreSQL tables: gateways, gateway_sessions, axle_records, alerts, threshold_settings, calibration, archives, rms_records, peak_records, fault_records, notification_deliveries, tms_deliveries."),
-        ("Processing", "Validate upload, parse records, calculate dashboard summaries, compare peak values with route-wise vertical/lateral thresholds, generate GPS alerts."),
+        ("Processing", "Authenticate request, validate upload, parse records, calculate dashboard summaries, compare peak values with route-wise vertical/lateral thresholds, generate GPS alerts."),
         ("Cloud sends to gateway", "Configuration JSON: route threshold, wheel wear/correction factor, sampling rate. Gateway polling/ack should be finalized in production."),
+        ("Cloud sends to SMS server", "When an alert is generated, cloud posts SMS JSON to SMS_SERVER_URL and stores success/failure in notification_deliveries."),
         ("Cloud sends to TMS/CRIS", "MDB-preferred handoff package containing spatial acceleration data and processed peak data. ASCII text files are included only as open documented fallback/import data."),
     ], [1.65, 5.1], 7.5)
 
@@ -191,6 +192,10 @@ Gateway demo JSON:
 Cloud-to-gateway config JSON:
 {"gatewayId":"GW001","route":"Bangalore-Chennai","verticalThreshold":50,
  "lateralThreshold":80,"samplingRate":2500,"correctionFactor":1.02}
+
+SMS server JSON:
+{"to":["+91xxxxxxxxxx"],"message":"UABAMS Info: vertical 77.2g...",
+ "alert":{"gatewayId":"GW004","trainId":"TRAIN21","gps":{"lat":13.15,"lon":77.73}}}
 ''')
 
     doc.add_section(WD_SECTION.NEW_PAGE)
@@ -208,7 +213,16 @@ Cloud-to-gateway config JSON:
 
     doc.add_heading("5. Can Railman Implement From This?", level=1)
     doc.add_paragraph("Yes, for cloud review/prototype implementation. This document gives the cloud workflow, received/sent data, storage structure, JSON examples, processing responsibilities and gateway connection type.")
-    doc.add_paragraph("Before production, Railman still must finalize: authentication, exact MDB schema/import method with CRIS, durable object storage for archives, SMS/notification provider, and hardware MMD/SOD compliance evidence.")
+    doc.add_paragraph("Before production, Railman still must finalize: exact MDB schema/import method with CRIS, durable object storage for archives, SMS provider credentials/recipients, and hardware MMD/SOD compliance evidence.")
+    table(doc, ["Production env variable", "Purpose"], [
+        ("DATABASE_URL", "PostgreSQL cloud database"),
+        ("API_AUTH_TOKEN", "Operator/frontend API authentication"),
+        ("GATEWAY_API_TOKEN", "Gateway archive/config authentication"),
+        ("VITE_API_TOKEN", "Frontend token matching API_AUTH_TOKEN"),
+        ("SMS_SERVER_URL", "SMS server endpoint for alert messages"),
+        ("SMS_SERVER_BEARER_TOKEN", "SMS server authentication token"),
+        ("SMS_RECIPIENTS", "Comma-separated officials/recipient numbers"),
+    ], [2.2, 4.55], 7.2)
 
     doc.save(OUT)
     print(OUT)

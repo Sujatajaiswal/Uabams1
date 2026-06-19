@@ -7,6 +7,7 @@ from sqlalchemy import func
 from app.config import settings
 from app import models
 from app.database import Base, SessionLocal, engine
+from app.security import require_optional_api_auth
 from app.routers import (
     alerts, archive, calibration, config, dashboard, gateways, maintenance,
     route_files, sections, threshold, tms_export, trains,
@@ -35,6 +36,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.middleware("http")(require_optional_api_auth)
 
 app.include_router(archive.router)
 app.include_router(dashboard.router)

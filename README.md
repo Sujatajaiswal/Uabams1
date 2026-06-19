@@ -77,8 +77,16 @@ Important variables:
 - `CORS_ORIGINS`: defaults to `*`
 - `SEED_ON_STARTUP`: defaults to `true`
 - `VITE_API_BASE_URL`: defaults to `http://localhost:8000`
-- `ALERT_NOTIFICATION_WEBHOOK_URL`: optional SMS/notification gateway endpoint
-- `ALERT_NOTIFICATION_BEARER_TOKEN`: optional bearer token for that endpoint
+- `API_AUTH_TOKEN`: optional operator/API bearer token; when set, `/api/v1/*`
+  requires `Authorization: Bearer <token>` or `X-API-Key`
+- `GATEWAY_API_TOKEN`: optional gateway bearer token for `/api/v1/archive`
+  and `/api/v1/config`
+- `VITE_API_TOKEN`: optional frontend token matching `API_AUTH_TOKEN`
+- `SMS_SERVER_URL`: optional SMS server endpoint for alert text messages
+- `SMS_SERVER_BEARER_TOKEN`: optional bearer token for the SMS server
+- `SMS_RECIPIENTS`: comma-separated mobile numbers / recipient IDs
+- `ALERT_NOTIFICATION_WEBHOOK_URL`: optional generic notification webhook
+- `ALERT_NOTIFICATION_BEARER_TOKEN`: optional bearer token for that webhook
 - `TMS_DELIVERY_MODE`: `local` by default, or `http` for direct CRIS/TMS API push
 - `TMS_HTTP_URL`: CRIS/TMS receiving endpoint when `TMS_DELIVERY_MODE=http`
 - `TMS_HTTP_BEARER_TOKEN`: optional bearer token for the CRIS/TMS endpoint
@@ -173,9 +181,10 @@ specification.
   and stored in `threshold_settings`.
 - "alerts containing value and GPS location": implemented in `alerts`, derived
   from uploaded session GPS/peak data and shown on the Alerts map.
-- "SMS/notification alerts": implemented as an auditable outbox. Configure
-  `ALERT_NOTIFICATION_WEBHOOK_URL` to push each alert to an SMS/notification
-  provider.
+- "SMS/notification alerts": implemented as auditable delivery rows. Configure
+  `SMS_SERVER_URL`, `SMS_SERVER_BEARER_TOKEN`, and `SMS_RECIPIENTS` to push
+  alert SMS messages; `ALERT_NOTIFICATION_WEBHOOK_URL` remains available for a
+  generic notification provider.
 - "transfer to CRIS server": implemented as a TMS delivery service. Default
   local mode writes the ZIP to disk for hand-off; configure
   `TMS_DELIVERY_MODE=http` and `TMS_HTTP_URL` when CRIS provides the receiving

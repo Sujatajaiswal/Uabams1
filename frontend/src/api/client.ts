@@ -13,10 +13,18 @@ import type {
 // In production this is injected at build time (Render static site env var).
 // Falls back to localhost for local `npm run dev` against the docker-compose backend.
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_TOKEN = import.meta.env.VITE_API_TOKEN || ''
 
 export const api = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
+})
+
+api.interceptors.request.use((config) => {
+  if (API_TOKEN) {
+    config.headers.Authorization = `Bearer ${API_TOKEN}`
+  }
+  return config
 })
 
 export async function getDashboard(): Promise<DashboardData> {
@@ -112,5 +120,18 @@ export async function uploadArchive(payload: SimulatedUploadPayload): Promise<Ar
  * backend/app/services/tms_export.py for the full rationale.
  */
 export async function downloadTmsExport(days = 30): Promise<void> {
-  window.location.href = `${BASE_URL}/api/v1/export/tms?days=${days}`
+  const response = await api.get('/api/v1/export/tms', {
+    params: { days },
+    responseType: 'blob',
+  })
+  const url = window.URL.createObjectURL(response.data)
+  const link = document.createElement('a')
+  const disposition = response.headers['content-disposition'] || ''
+  const match = disposition.match(/filename="?([^"]+)"?/)
+  link.href = url
+  link.download = match?.[1] || `uabams_tms_export_${days}d.zip`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
 }

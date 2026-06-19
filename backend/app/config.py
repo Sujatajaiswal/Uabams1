@@ -29,6 +29,12 @@ class Settings:
     )
     SEED_ON_STARTUP: bool = os.getenv("SEED_ON_STARTUP", "true").lower() == "true"
 
+    # Optional API authentication. Leave blank for local/demo review.
+    # In production, set API_AUTH_TOKEN for dashboard/operator APIs and
+    # GATEWAY_API_TOKEN for gateway archive/config calls.
+    API_AUTH_TOKEN: str = os.getenv("API_AUTH_TOKEN", "")
+    GATEWAY_API_TOKEN: str = os.getenv("GATEWAY_API_TOKEN", "")
+
     # Default acceleration thresholds (g) applied when a route has no
     # explicit entry in the threshold table yet.
     DEFAULT_VERTICAL_THRESHOLD: float = 50.0
@@ -42,6 +48,9 @@ class Settings:
     # records an auditable outbox/delivery row instead of pretending to send.
     ALERT_NOTIFICATION_WEBHOOK_URL: str = os.getenv("ALERT_NOTIFICATION_WEBHOOK_URL", "")
     ALERT_NOTIFICATION_BEARER_TOKEN: str = os.getenv("ALERT_NOTIFICATION_BEARER_TOKEN", "")
+    SMS_SERVER_URL: str = os.getenv("SMS_SERVER_URL", "")
+    SMS_SERVER_BEARER_TOKEN: str = os.getenv("SMS_SERVER_BEARER_TOKEN", "")
+    SMS_RECIPIENTS: str = os.getenv("SMS_RECIPIENTS", "")
     TMS_DELIVERY_MODE: str = os.getenv("TMS_DELIVERY_MODE", "local").lower()
     TMS_HTTP_URL: str = os.getenv("TMS_HTTP_URL", "")
     TMS_HTTP_BEARER_TOKEN: str = os.getenv("TMS_HTTP_BEARER_TOKEN", "")
