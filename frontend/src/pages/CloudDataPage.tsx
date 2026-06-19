@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Database, Download, FileJson, RefreshCcw } from 'lucide-react'
+import { Database, Download, FileJson, MessageSquare, RefreshCcw, ShieldCheck } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import {
   CLOUD_DATA_ENDPOINTS,
   api,
   downloadTmsExport,
   getCloudDataEndpoints,
+  getIntegrationStatus,
+  sendDemoSms,
   type CloudDataEndpoint,
+  type DemoSmsResult,
+  type IntegrationStatus,
 } from '../api/client'
 
 type FlatRow = Record<string, string | number | boolean | null>
@@ -113,13 +117,20 @@ export default function CloudDataPage() {
   const [sections, setSections] = useState<CloudDataEndpoint[]>([])
   const [loading, setLoading] = useState(true)
   const [exportingTms, setExportingTms] = useState(false)
+  const [smsTesting, setSmsTesting] = useState(false)
+  const [integration, setIntegration] = useState<IntegrationStatus | null>(null)
+  const [smsResult, setSmsResult] = useState<DemoSmsResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
     try {
-      const data = await getCloudDataEndpoints()
+      const [data, status] = await Promise.all([
+        getCloudDataEndpoints(),
+        getIntegrationStatus(),
+      ])
       setSections(data)
+      setIntegration(status)
       setError(null)
     } catch {
       setError('Could not load cloud data. Please check that the backend service is running.')
@@ -156,6 +167,23 @@ export default function CloudDataPage() {
       setExportingTms(false)
     }
   }
+
+  async function handleDemoSms() {
+    setSmsTesting(true)
+    try {
+      const result = await sendDemoSms()
+      setSmsResult(result)
+      await load()
+    } finally {
+      setSmsTesting(false)
+    }
+  }
+
+  const apiAuthEnabled = integration?.authentication.apiAuthEnabled ?? false
+  const gatewayAuthEnabled = integration?.authentication.gatewayAuthEnabled ?? false
+  const smsMode = integration?.smsServer.mode ?? 'unknown'
+  const smsConfigured = integration?.smsServer.configured ?? false
+  const dbType = integration?.database.type ?? 'unknown'
 
   return (
     <>
@@ -219,6 +247,70 @@ export default function CloudDataPage() {
               <Download size={14} />
               {exportingTms ? 'Preparing...' : 'TMS ZIP'}
             </button>
+          </div>
+        </div>
+
+        <div className="panel overflow-hidden">
+          <div className="panel-header">
+            <div>
+              <p className="font-display font-medium text-[15px] text-rail-navy">Authentication & SMS Test</p>
+              <p className="text-[12px] text-rail-steelLight">
+                Visible test area for the protected API and demo SMS server.
+              </p>
+            </div>
+            <button
+              onClick={handleDemoSms}
+              disabled={smsTesting || loading}
+              className="inline-flex items-center gap-2 rounded-md bg-rail-blue px-3 py-2 text-[12.5px] font-medium text-white hover:bg-rail-blueDark disabled:opacity-60"
+            >
+              <MessageSquare size={14} />
+              {smsTesting ? 'Sending...' : 'Send Demo SMS'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4">
+            <div className="rounded-md border border-rail-line bg-white p-3">
+              <div className="flex items-center gap-2 text-rail-navy">
+                <ShieldCheck size={16} />
+                <p className="label-eyebrow">API Auth</p>
+              </div>
+              <p className={`mt-2 font-display text-[20px] ${apiAuthEnabled ? 'text-status-normal' : 'text-rail-steel'}`}>
+                {apiAuthEnabled ? 'Enabled' : 'Open demo'}
+              </p>
+            </div>
+            <div className="rounded-md border border-rail-line bg-white p-3">
+              <p className="label-eyebrow">Gateway Auth</p>
+              <p className={`mt-2 font-display text-[20px] ${gatewayAuthEnabled ? 'text-status-normal' : 'text-rail-steel'}`}>
+                {gatewayAuthEnabled ? 'Enabled' : 'Open demo'}
+              </p>
+            </div>
+            <div className="rounded-md border border-rail-line bg-white p-3">
+              <p className="label-eyebrow">SMS Server</p>
+              <p className={`mt-2 font-display text-[20px] ${smsConfigured ? 'text-status-normal' : 'text-status-warning'}`}>
+                {smsMode}
+              </p>
+            </div>
+            <div className="rounded-md border border-rail-line bg-white p-3">
+              <p className="label-eyebrow">Cloud DB</p>
+              <p className="mt-2 font-display text-[20px] text-rail-navy">{dbType}</p>
+            </div>
+          </div>
+
+          <div className="border-t border-rail-line bg-rail-fog/35 px-4 py-3 text-[12.5px] text-rail-steel">
+            {smsResult ? (
+              <div className="space-y-1">
+                <p>
+                  Demo SMS output: <span className="font-semibold text-status-normal">{smsResult.status}</span>
+                  {' '}in <span className="font-semibold">{smsResult.outputTable}</span>
+                  {smsResult.providerMessageId ? `, message id ${smsResult.providerMessageId}` : ''}.
+                </p>
+                <p className="truncate">Message: {smsResult.message}</p>
+              </div>
+            ) : (
+              <p>
+                Click Send Demo SMS, then check the Notification Deliveries table below for channel, status, recipient, message and providerMessageId.
+              </p>
+            )}
           </div>
         </div>
 

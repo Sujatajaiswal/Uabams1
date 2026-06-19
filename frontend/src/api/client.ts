@@ -44,6 +44,40 @@ export interface CloudDataEndpoint<T = unknown> {
   data: T
 }
 
+export interface IntegrationStatus {
+  authentication: {
+    apiAuthEnabled: boolean
+    gatewayAuthEnabled: boolean
+    operatorHeader: string
+    gatewayHeader: string
+  }
+  smsServer: {
+    configured: boolean
+    mode: string
+    recipientCount: number
+    outputTable: string
+    latestStatus: string | null
+    latestMessage: string | null
+  }
+  database: {
+    type: string
+    notificationDeliveries: number
+  }
+}
+
+export interface DemoSmsResult {
+  ok: boolean
+  alertId: number
+  channel: string
+  status: string
+  recipient: string | null
+  message: string | null
+  providerMessageId: string | null
+  outputTable: string
+  createdAt: string
+  sentAt: string | null
+}
+
 export const CLOUD_DATA_ENDPOINTS = [
   { key: 'dashboard', label: 'Dashboard Summary', path: '/api/v1/dashboard' },
   { key: 'alerts', label: 'Alerts', path: '/api/v1/alerts' },
@@ -54,6 +88,11 @@ export const CLOUD_DATA_ENDPOINTS = [
     key: 'notificationDeliveries',
     label: 'Notification Deliveries',
     path: '/api/v1/maintenance/notification-deliveries',
+  },
+  {
+    key: 'integrationStatus',
+    label: 'Authentication & SMS Status',
+    path: '/api/v1/maintenance/integration-status',
   },
   {
     key: 'tmsDeliveries',
@@ -70,6 +109,16 @@ export async function getCloudDataEndpoints(): Promise<CloudDataEndpoint[]> {
     }),
   )
   return responses
+}
+
+export async function getIntegrationStatus(): Promise<IntegrationStatus> {
+  const { data } = await api.get<IntegrationStatus>('/api/v1/maintenance/integration-status')
+  return data
+}
+
+export async function sendDemoSms(): Promise<DemoSmsResult> {
+  const { data } = await api.post<DemoSmsResult>('/api/v1/maintenance/demo-sms')
+  return data
 }
 
 export async function getAlerts(params?: { severity?: string; route?: string }): Promise<AlertRecord[]> {
